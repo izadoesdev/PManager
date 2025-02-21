@@ -29,7 +29,9 @@ export default function Auth() {
         toast.error('Invalid password')
       }
     } catch (error) {
-      toast.error('Something went wrong')
+      toast.error('Something went wrong', {
+        description: 'Error: ' + error
+      })
     } finally {
       setIsLoading(false)
     }

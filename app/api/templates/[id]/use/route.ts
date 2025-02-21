@@ -1,18 +1,28 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/db'
 
-export async function POST(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+const handleError = (error: unknown) => {
+  const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred'
+  console.error('Error:', errorMessage)
+  return NextResponse.json({ error: errorMessage }, { status: 500 })
+}
+
+export async function POST(request: Request) {
   try {
-    const { id } = params
+    const id = parseInt(request.url.split('/templates/')[1].split('/')[0])
+    if (isNaN(id)) {
+      return NextResponse.json(
+        { error: 'Invalid template ID' },
+        { status: 400 }
+      )
+    }
+
     const data = await request.json()
     const { title, description } = data
 
     // Get the template with its lists and cards
     const template = await prisma.template.findUnique({
-      where: { id: parseInt(id) },
+      where: { id },
       include: {
         lists: {
           include: {
@@ -26,7 +36,10 @@ export async function POST(
     })
 
     if (!template) {
-      return new NextResponse('Template not found', { status: 404 })
+      return NextResponse.json(
+        { error: 'Template not found' },
+        { status: 404 }
+      )
     }
 
     // Create a new board from the template
@@ -61,7 +74,6 @@ export async function POST(
 
     return NextResponse.json(board)
   } catch (error) {
-    console.error('Error creating board from template:', error)
-    return new NextResponse('Error creating board from template', { status: 500 })
+    return handleError(error)
   }
 } 

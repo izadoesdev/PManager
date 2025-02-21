@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/db'
 
+const handleError = (error: unknown) => {
+  const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred'
+  console.error('Error:', errorMessage)
+  return NextResponse.json({ error: errorMessage }, { status: 500 })
+}
+
 export async function DELETE(request: Request) {
   try {
     const id = parseInt(request.url.split('/lists/')[1].split('/')[0])
@@ -21,9 +27,8 @@ export async function DELETE(request: Request) {
       where: { id }
     })
 
-    return new NextResponse(null, { status: 204 })
+    return NextResponse.json({ message: 'List deleted successfully' }, { status: 200 })
   } catch (error) {
-    console.error('Error deleting list:', error)
-    return new NextResponse('Error deleting list', { status: 500 })
+    return handleError(error)
   }
 } 

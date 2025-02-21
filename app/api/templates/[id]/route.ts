@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/db'
 
+const handleError = (error: unknown) => {
+  const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred'
+  console.error('Error:', errorMessage)
+  return NextResponse.json({ error: errorMessage }, { status: 500 })
+}
+
 export async function DELETE(request: Request) {
   try {
     const id = parseInt(request.url.split('/templates/')[1].split('/')[0])
@@ -26,10 +32,9 @@ export async function DELETE(request: Request) {
       where: { id }
     })
 
-    return new NextResponse(null, { status: 204 })
+    return NextResponse.json({ message: 'Template deleted successfully' }, { status: 200 })
   } catch (error) {
-    console.error('Error deleting template:', error)
-    return new NextResponse('Error deleting template', { status: 500 })
+    return handleError(error)
   }
 }
 
@@ -56,7 +61,6 @@ export async function PUT(request: Request) {
 
     return NextResponse.json(template)
   } catch (error) {
-    console.error('Error updating template:', error)
-    return new NextResponse('Error updating template', { status: 500 })
+    return handleError(error)
   }
 } 

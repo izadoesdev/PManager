@@ -1,4 +1,5 @@
 import { type List as ListType, type Card as CardType } from '@prisma/client'
+import { type BoardWithCounts } from '@/app/lib/types'
 
 export const api = {
   lists: {
@@ -79,6 +80,31 @@ export const api = {
         body: JSON.stringify({ id, listId, order })
       })
       return response.json()
+    }
+  },
+
+  boards: {
+    getAll: async (): Promise<BoardWithCounts[]> => {
+      const res = await fetch('/api/boards')
+      if (!res.ok) throw new Error('Failed to fetch boards')
+      return res.json()
+    },
+    
+    update: async (id: number, data: Partial<BoardWithCounts>): Promise<BoardWithCounts> => {
+      const res = await fetch('/api/boards', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, ...data })
+      })
+      if (!res.ok) throw new Error('Failed to update board')
+      return res.json()
+    },
+    
+    delete: async (id: number): Promise<boolean> => {
+      const res = await fetch(`/api/boards/${id}`, {
+        method: 'DELETE'
+      })
+      return res.ok
     }
   }
 } 

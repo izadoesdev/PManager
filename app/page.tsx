@@ -1,19 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,97 +13,64 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Plus, Archive, Trash2, RotateCcw, Clock, ListTodo } from "lucide-react"
+import { Plus, Archive, Trash2, RotateCcw, Clock, ListTodo, Search, Loader2 } from "lucide-react"
 import { type BoardWithCounts } from '@/app/lib/types'
 import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
 import { TemplateDialog } from './components/TemplateDialog'
+import { SearchDialog } from './components/SearchDialog'
+import { useBoards } from './hooks/useBoards'
 
-async function getBoards() {
-  const res = await fetch('/api/boards')
-  return res.json() 
-}
-
-async function createBoard(title: string, description: string | null) {
-  const res = await fetch('/api/boards', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ title, description })
-  })
-  return res.json()
-}
-
-async function updateBoard(id: number, data: Partial<BoardWithCounts>) {
-  const res = await fetch('/api/boards', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id, ...data })
-  })
-  return res.json()
-}
-
-async function deleteBoard(id: number) {
-  const res = await fetch(`/api/boards/${id}`, {
-    method: 'DELETE'
-  })
-  return res.ok
-}
+dayjs.extend(relativeTime)
 
 export default function Home() {
-  const [boards, setBoards] = useState<BoardWithCounts[]>([])
+  const { filteredBoards, handleArchiveBoard, handleDeleteBoard, handlePermanentDelete, isLoading, error } = useBoards()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [boardToDelete, setBoardToDelete] = useState<{ board: BoardWithCounts, permanent: boolean } | null>(null)
 
-  // Load boards on mount
-  useEffect(() => {
-    getBoards().then(setBoards)
-  }, [])
-
-  const handleArchiveBoard = async (board: BoardWithCounts) => {
-    const newStatus = board.status === 'archived' ? 'active' : 'archived'
-    const updatedBoard = await updateBoard(board.id, {
-      status: newStatus,
-      archivedAt: newStatus === 'archived' ? new Date() : null
-    })
-    setBoards(boards.map(b => b.id === board.id ? updatedBoard : b))
+  if (isLoading) {
+    return (
+      <main className="container py-8">
+        <div className="flex items-center justify-center h-[60vh]">
+          <Loader2 className="h-10 w-10 animate-spin" />
+        </div>
+      </main>
+    )
   }
 
-  const handleDeleteBoard = async (board: BoardWithCounts) => {
-    const newStatus = board.status === 'deleted' ? 'active' : 'deleted'
-    const updatedBoard = await updateBoard(board.id, {
-      status: newStatus,
-      deletedAt: newStatus === 'deleted' ? new Date() : null
-    })
-    setBoards(boards.map(b => b.id === board.id ? updatedBoard : b))
-    setBoardToDelete(null)
+  if (error) {
+    return (
+      <main className="container py-8">
+        <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
+          <p className="text-destructive">{error}</p>
+          <Button onClick={() => window.location.reload()}>Try Again</Button>
+        </div>
+      </main>
+    )
   }
-
-  const handlePermanentDelete = async (board: BoardWithCounts) => {
-    const success = await deleteBoard(board.id)
-    if (success) {
-      setBoards(boards.filter(b => b.id !== board.id))
-    }
-    setBoardToDelete(null)
-  }
-
-  const activeBoards = boards.filter(board => board.status === 'active')
-  const archivedBoards = boards.filter(board => board.status === 'archived')
-  const deletedBoards = boards.filter(board => board.status === 'deleted')
 
   return (
     <main className="container py-8">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold">Project Boards</h1>
-        <Button onClick={() => setIsDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Board
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="icon" onClick={() => setIsSearchOpen(true)}>
+            <Search className="h-4 w-4" />
+          </Button>
+          <Button onClick={() => setIsDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Board
+          </Button>
+        </div>
+        <SearchDialog open={isSearchOpen} onOpenChange={setIsSearchOpen} />
         <TemplateDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
       </div>
 
       {/* Active Boards */}
       <div className="space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {activeBoards.map(board => (
+          {filteredBoards.active.map(board => (
             <Link
               key={board.id}
               href={`/board/${board.id}`}
@@ -178,14 +134,14 @@ export default function Home() {
         </div>
 
         {/* Archived Boards */}
-        {archivedBoards.length > 0 && (
+        {filteredBoards.archived.length > 0 && (
           <div>
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
               <Archive className="h-5 w-5" />
               Archived Boards
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {archivedBoards.map(board => (
+              {filteredBoards.archived.map(board => (
                 <div
                   key={board.id}
                   className="group bg-card/50 rounded-lg p-4 border hover:border-primary/50 transition-all"
@@ -223,14 +179,14 @@ export default function Home() {
         )}
 
         {/* Deleted Boards */}
-        {deletedBoards.length > 0 && (
+        {filteredBoards.deleted.length > 0 && (
           <div>
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
               <Trash2 className="h-5 w-5" />
               Deleted Boards
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {deletedBoards.map(board => (
+              {filteredBoards.deleted.map(board => (
                 <div
                   key={board.id}
                   className="group bg-card/50 rounded-lg p-4 border hover:border-primary/50 transition-all"

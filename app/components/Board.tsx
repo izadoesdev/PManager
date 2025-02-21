@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import Link from 'next/link'
 import { SaveTemplateDialog } from './SaveTemplateDialog'
+import { toast } from 'sonner'
 
 dayjs.extend(relativeTime)
 
@@ -322,6 +323,7 @@ Last exported: ${dayjs().format('MMM D, YYYY h:mm A')} - Coded by Issa :)
 ${activeSection}${archivedSection}`.trim()
 
     navigator.clipboard.writeText(summary)
+    toast.success('Board exported to clipboard')
   }
 
   const updateBoardTitle = async () => {
@@ -350,7 +352,7 @@ ${activeSection}${archivedSection}`.trim()
   }
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-screen flex flex-col scroll-smooth">
       <header className="border-b bg-card px-4 lg:px-6 py-3 flex items-center justify-between sticky top-0 z-10">
         <div className="flex items-center gap-4">
           <Link href="/">
@@ -436,7 +438,7 @@ ${activeSection}${archivedSection}`.trim()
         </div>
       </header>
 
-      <main className="flex-1 overflow-x-auto p-4 lg:p-6">
+      <main className="flex-1 overflow-x-auto p-4 lg:p-6 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-900 hover:[&::-webkit-scrollbar-thumb]:bg-gray-800 [&::-webkit-scrollbar-track]:bg-accent [&::-webkit-scrollbar-corner]:bg-transparent">
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="lists" direction="horizontal" type="list">
             {(provided) => (

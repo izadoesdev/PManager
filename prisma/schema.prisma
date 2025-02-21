@@ -10,7 +10,55 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = "file:./dev.db"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  boardMembers  BoardMember[]
+  comments      Comment[]
+  activities    Activity[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
 }
 
 enum Priority {
@@ -25,6 +73,13 @@ enum Status {
   deleted
 }
 
+enum Role {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
 model Board {
   id          Int       @id @default(autoincrement())
   title       String
@@ -36,8 +91,24 @@ model Board {
   lists       List[]
   labels      Label[]
   template    Template? @relation("TemplateSource")
+  members     BoardMember[]
+  activities  Activity[]
 
   @@map("boards")
+}
+
+model BoardMember {
+  id        Int      @id @default(autoincrement())
+  role      Role     @default(MEMBER)
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  boardId   Int      @map("board_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([boardId, userId])
+  @@map("board_members")
 }
 
 model List {
@@ -51,6 +122,7 @@ model List {
   board       Board     @relation(fields: [boardId], references: [id])
   boardId     Int       @map("board_id")
   cards       Card[]
+  activities  Activity[]
 
   @@map("lists")
 }
@@ -68,22 +140,54 @@ model Label {
 }
 
 model Card {
-  id          Int       @id @default(autoincrement())
-  title       String
-  description String?
-  priority    Priority  @default(low)
-  status      Status    @default(active)
-  order       Int
-  dueDate     DateTime? @map("due_date")
-  estimatedTime Int?    @map("estimated_time") // in minutes
-  labels      Label[]
-  createdAt   DateTime  @default(now()) @map("created_at")
-  archivedAt  DateTime? @map("archived_at")
-  deletedAt   DateTime? @map("deleted_at")
-  list        List      @relation(fields: [listId], references: [id])
-  listId      Int       @map("list_id")
+  id            Int       @id @default(autoincrement())
+  title         String
+  description   String?
+  priority      Priority  @default(low)
+  status        Status    @default(active)
+  order         Int
+  dueDate       DateTime? @map("due_date")
+  estimatedTime Int?      @map("estimated_time") // in minutes
+  labels        Label[]
+  createdAt     DateTime  @default(now()) @map("created_at")
+  archivedAt    DateTime? @map("archived_at")
+  deletedAt     DateTime? @map("deleted_at")
+  list          List      @relation(fields: [listId], references: [id])
+  listId        Int       @map("list_id")
+  comments      Comment[]
+  activities    Activity[]
 
   @@map("cards")
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String
+  card      Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  cardId    Int      @map("card_id")
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("comments")
+}
+
+model Activity {
+  id          Int      @id @default(autoincrement())
+  type        String   // e.g., 'card.created', 'card.moved', 'comment.added'
+  data        String   // JSON string containing activity details
+  board       Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  boardId     Int      @map("board_id")
+  list        List?    @relation(fields: [listId], references: [id])
+  listId      Int?     @map("list_id")
+  card        Card?    @relation(fields: [cardId], references: [id])
+  cardId      Int?     @map("card_id")
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String   @map("user_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("activities")
 }
 
 model Template {

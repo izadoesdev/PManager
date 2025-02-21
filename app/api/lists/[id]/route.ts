@@ -6,7 +6,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = params
+    const { id } = await params
 
     // First delete all cards in the list
     await prisma.card.deleteMany({

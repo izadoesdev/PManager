@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Dialog,
@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils"
 import { Search, Calendar as CalendarIcon, Tag, Clock, X } from "lucide-react"
 import { type Priority, type Label } from '@prisma/client'
 import dayjs from 'dayjs'
+import { useDebounce } from '@/app/hooks/use-debounce'
 
 interface SearchResult {
   id: number
@@ -60,7 +61,8 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
     dueDate: null as Date | null,
     labels: [] as Label[]
   })
-  const [availableLabels, setAvailableLabels] = useState<Label[]>([])
+//   const [availableLabels, setAvailableLabels] = useState<Label[]>([])
+  const debouncedQuery = useDebounce(query, 300)
 
   useEffect(() => {
     if (open) {
@@ -94,19 +96,24 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
     try {
       const response = await fetch('/api/labels')
       if (response.ok) {
-        const labels = await response.json()
-        setAvailableLabels(labels)
+        // const labels = await response.json()
+        // setAvailableLabels(labels)
       }
     } catch (error) {
       console.error('Error fetching labels:', error)
     }
   }
 
-  const performSearch = async () => {
+  const performSearch = useCallback(async () => {
+    if (!debouncedQuery.trim()) {
+      setResults([])
+      return
+    }
+
     setIsLoading(true)
     try {
       const searchParams = new URLSearchParams({
-        q: query,
+        q: debouncedQuery,
         type: filters.type,
         priority: filters.priority,
         ...(filters.dueDate && { dueDate: filters.dueDate.toISOString() }),
@@ -120,10 +127,15 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
       }
     } catch (error) {
       console.error('Error performing search:', error)
+      setResults([])
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [debouncedQuery, filters])
+
+  useEffect(() => {
+    performSearch()
+  }, [performSearch])
 
   const handleResultClick = (result: SearchResult) => {
     if (result.type === 'board') {

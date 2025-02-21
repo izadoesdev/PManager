@@ -34,7 +34,7 @@ export const authOptions: NextAuthOptions = {
         data: {
           type: 'user.registered',
           data: JSON.stringify({ email: user.email }),
-          userId: parseInt(user.id),
+          userId: user.id,
           boardId: 0, // System activity
         },
       })

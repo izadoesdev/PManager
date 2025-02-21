@@ -11,7 +11,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
-import { Plus, Archive, Pencil, Check, Trash2, FileDown, X, RotateCcw, ArrowLeft, Save } from "lucide-react"
+import { Plus, Archive, Pencil, Check, Trash2, FileDown, ArrowLeft, Save, RotateCcw } from "lucide-react"
 import { type List as ListType, type Card as CardType, type Board as BoardType } from '@prisma/client'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
@@ -55,7 +55,6 @@ export default function Board({ board, initialLists, initialCards }: BoardProps)
 
     // Handle list reordering
     if (type === 'list') {
-      const listId = parseInt(draggableId.replace('list-', ''))
       
       // Only work with active lists for reordering
       const activeNewLists = Array.from(lists)

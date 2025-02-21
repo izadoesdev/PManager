@@ -1,7 +1,6 @@
 import { prisma } from '@/app/lib/db'
 import { notFound } from 'next/navigation'
 import Board from '@/app/components/Board'
-import Link from 'next/link'
 import { Metadata } from 'next'
 
 interface BoardPageProps {

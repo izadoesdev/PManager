@@ -24,7 +24,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Template } from '@prisma/client'
-import { Plus, Layout, Pencil, Trash2, Save } from "lucide-react"
+import { Plus, Pencil, Trash2, Save } from "lucide-react"
 
 interface TemplateDialogProps {
   open: boolean

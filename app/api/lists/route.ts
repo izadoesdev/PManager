@@ -1,6 +1,14 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/db'
 
+interface ListUpdateData {
+  title?: string
+  order?: number
+  status?: 'active' | 'archived' | 'deleted'
+  archivedAt?: Date | null
+  deletedAt?: Date | null
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
@@ -16,8 +24,9 @@ export async function GET(request: Request) {
     })
 
     return NextResponse.json(lists)
-  } catch (error) {
-    console.error('Error fetching lists:', error)
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred'
+    console.error('Error:', errorMessage)
     return new NextResponse('Error fetching lists', { status: 500 })
   }
 }
@@ -35,8 +44,9 @@ export async function POST(request: Request) {
     })
     
     return NextResponse.json(list)
-  } catch (error) {
-    console.error('Error creating list:', error)
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred'
+    console.error('Error:', errorMessage)
     return new NextResponse('Error creating list', { status: 500 })
   }
 }
@@ -45,7 +55,7 @@ export async function PUT(request: Request) {
   try {
     const data = await request.json()
     
-    const updateData: any = {}
+    const updateData: ListUpdateData = {}
     
     if (data.title !== undefined) updateData.title = data.title
     if (data.order !== undefined) updateData.order = data.order
@@ -69,8 +79,9 @@ export async function PUT(request: Request) {
     })
     
     return NextResponse.json(list)
-  } catch (error) {
-    console.error('Error updating list:', error)
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred'
+    console.error('Error:', errorMessage)
     return new NextResponse('Error updating list', { status: 500 })
   }
 }

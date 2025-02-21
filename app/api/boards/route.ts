@@ -1,6 +1,14 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/db'
 
+interface BoardUpdateData {
+  title?: string
+  description?: string
+  status?: 'active' | 'archived' | 'deleted'
+  archivedAt?: Date | null
+  deletedAt?: Date | null
+}
+
 export async function GET() {
   try {
     const boards = await prisma.board.findMany({
@@ -68,7 +76,7 @@ export async function PUT(request: Request) {
   try {
     const data = await request.json()
     
-    const updateData: any = {}
+    const updateData: BoardUpdateData = {}
     
     if (data.title !== undefined) updateData.title = data.title
     if (data.description !== undefined) updateData.description = data.description

@@ -29,6 +29,30 @@ export default function Home() {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [boardToDelete, setBoardToDelete] = useState<{ board: BoardWithCounts, permanent: boolean } | null>(null)
 
+  // const handleCreateBoard = async () => {
+  //   if (!newBoardTitle.trim()) return
+
+  //   try {
+  //     const response = await fetch('/api/boards', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify({
+  //         title: newBoardTitle,
+  //       }),
+  //     })
+
+  //     if (!response.ok) throw new Error('Failed to create board')
+      
+  //     const board = await response.json()
+  //     setNewBoardTitle('')
+  //     router.push(`/board/${board.id}`)
+  //   } catch (error) {
+  //     console.error('Error creating board:', error)
+  //   }
+  // }
+
   if (isLoading) {
     return (
       <main className="container py-8">
@@ -270,10 +294,11 @@ export default function Home() {
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => {
-                if (!boardToDelete) return
-                boardToDelete.permanent 
-                  ? handlePermanentDelete(boardToDelete.board)
-                  : handleDeleteBoard(boardToDelete.board)
+                if (boardToDelete?.permanent) {
+                  handlePermanentDelete(boardToDelete.board)
+                } else if (boardToDelete) {
+                  handleDeleteBoard(boardToDelete.board)
+                }
               }}
             >
               {boardToDelete?.permanent ? 'Delete Forever' : 'Delete Board'}

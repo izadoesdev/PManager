@@ -1,5 +1,19 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/db'
+import { type Priority } from '@prisma/client'
+
+interface CardUpdateData {
+  title?: string
+  description?: string
+  priority?: Priority
+  listId?: number
+  order?: number
+  dueDate?: Date | null
+  estimatedTime?: number | null
+  status?: 'active' | 'archived' | 'deleted'
+  archivedAt?: Date | null
+  deletedAt?: Date | null
+}
 
 export async function POST(request: Request) {
   const data = await request.json()
@@ -22,7 +36,7 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   const data = await request.json()
   
-  const updateData: any = {}
+  const updateData: CardUpdateData = {}
   
   if (data.title !== undefined) updateData.title = data.title
   if (data.description !== undefined) updateData.description = data.description
@@ -71,4 +85,12 @@ export async function DELETE(request: Request) {
   })
   
   return NextResponse.json(card)
+}
+
+export async function handleError(error: unknown) {
+  const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred'
+  console.error('Error:', errorMessage)
+  return new Response(JSON.stringify({ error: errorMessage }), {
+    status: 500,
+  })
 } 

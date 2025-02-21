@@ -6,7 +6,7 @@ import { Card as CardUI } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Pencil, X, Check, Archive, Trash2, Clock, Calendar, RotateCcw, Copy, Timer } from "lucide-react"
+import { Pencil, X, Check, Archive, Trash2, Calendar, RotateCcw, Copy, Timer } from "lucide-react"
 import { type Card as CardType, type Label } from '@prisma/client'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'

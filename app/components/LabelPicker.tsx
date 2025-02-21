@@ -31,19 +31,22 @@ export function LabelPicker({ boardId, selectedLabels, onLabelsChange }: LabelPi
   const [labels, setLabels] = useState<Label[]>([])
   const [isCreating, setIsCreating] = useState(false)
   const [newLabelName, setNewLabelName] = useState('')
-  const [selectedColor, setSelectedColor] = useState(PRESET_COLORS[0].value)
+  const [selectedColor, setSelectedColor] = useState<string>('')
+
+  const fetchLabels = async () => {
+    try {
+      const response = await fetch(`/api/boards/${boardId}/labels`)
+      if (!response.ok) throw new Error('Failed to fetch labels')
+      const data = await response.json()
+      setLabels(data)
+    } catch (error) {
+      console.error('Error fetching labels:', error)
+    }
+  }
 
   useEffect(() => {
     fetchLabels()
-  }, [boardId])
-
-  const fetchLabels = async () => {
-    const response = await fetch(`/api/boards/${boardId}/labels`)
-    if (response.ok) {
-      const data = await response.json()
-      setLabels(data)
-    }
-  }
+  }, [])
 
   const createLabel = async () => {
     if (!newLabelName.trim()) return
@@ -86,6 +89,10 @@ export function LabelPicker({ boardId, selectedLabels, onLabelsChange }: LabelPi
     }
   }
 
+  const handleColorChange = (color: string) => {
+    setSelectedColor(color)
+  }
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -107,7 +114,7 @@ export function LabelPicker({ boardId, selectedLabels, onLabelsChange }: LabelPi
               <div
                 key={label.id}
                 className="flex items-center gap-2"
-                style={{ '--label-color': label.color } as any}
+                style={{ ['--label-color' as string]: label.color }}
               >
                 <button
                   onClick={() => toggleLabel(label)}
@@ -149,7 +156,7 @@ export function LabelPicker({ boardId, selectedLabels, onLabelsChange }: LabelPi
                     key={color.value}
                     className={`w-6 h-6 rounded ${selectedColor === color.value ? 'ring-2 ring-offset-2' : ''}`}
                     style={{ backgroundColor: color.value }}
-                    onClick={() => setSelectedColor(color.value)}
+                    onClick={() => handleColorChange(color.value)}
                   />
                 ))}
               </div>

@@ -2,7 +2,6 @@
 
 import { signIn } from "next-auth/react"
 import { Button } from "@/components/ui/button"
-import { Github } from "lucide-react"
 
 export default function SignIn() {
   return (

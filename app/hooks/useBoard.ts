@@ -158,7 +158,6 @@ export function useBoard(initialLists: ListType[], initialCards: CardType[]) {
 
     // Handle list reordering
     if (type === 'list') {
-      const listId = parseInt(draggableId.replace('list-', ''))
       
       // Only work with active lists for reordering
       const activeNewLists = Array.from(lists)

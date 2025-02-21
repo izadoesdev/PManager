@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/db'
 
 export async function GET(
-  request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -43,7 +42,6 @@ export async function POST(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
 ) {
   try {
     const data = await request.json()
@@ -65,7 +63,6 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
 ) {
   try {
     const { searchParams } = new URL(request.url)

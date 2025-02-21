@@ -2,6 +2,7 @@ import { prisma } from '@/app/lib/db'
 import { notFound } from 'next/navigation'
 import Board from '@/app/components/Board'
 import Link from 'next/link'
+import { Metadata } from 'next'
 
 interface BoardPageProps {
   params: {
@@ -37,6 +38,22 @@ async function getData(boardId: number) {
   } catch (error) {
     console.error('Error fetching board data:', error)
     return null
+  }
+}
+
+export async function generateMetadata({ params }: BoardPageProps): Promise<Metadata> {
+    const { id } = await params
+  const data = await getData(parseInt(id))
+  
+  if (!data) {
+    return {
+      title: 'Board Not Found'
+    }
+  }
+
+  return {
+    title: data.board.title,
+    description: data.board.description || `PManager board with ${data.lists.length} lists and ${data.cards.length} cards`
   }
 }
 

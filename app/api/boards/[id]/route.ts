@@ -1,26 +1,29 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/db'
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: Request) {
   try {
-    const { id } = await params
+    const id = parseInt(request.url.split('/boards/')[1].split('/')[0])
+    if (isNaN(id)) {
+      return NextResponse.json(
+        { error: 'Invalid board ID' },
+        { status: 400 }
+      )
+    }
 
     // First delete all cards in all lists of the board
     await prisma.card.deleteMany({
-      where: { list: { boardId: parseInt(id) } }
+      where: { list: { boardId: id } }
     })
 
     // Then delete all lists in the board
     await prisma.list.deleteMany({
-      where: { boardId: parseInt(id) }
+      where: { boardId: id }
     })
 
     // Finally delete the board
     await prisma.board.delete({
-      where: { id: parseInt(id) }
+      where: { id }
     })
 
     return new NextResponse(null, { status: 204 })

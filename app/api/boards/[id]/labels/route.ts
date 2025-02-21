@@ -1,84 +1,132 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/db'
+import { z } from 'zod'
 
-export async function GET(
-  { params }: { params: { id: string } }
-) {
+// Validation schemas
+const labelSchema = z.object({
+  name: z.string().min(1, 'Label name is required'),
+  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid color format')
+})
+
+// Error handling
+const handleError = (error: unknown) => {
+  console.error('Label operation error:', error)
+  if (error instanceof z.ZodError) {
+    return NextResponse.json(
+      { error: error.errors[0].message },
+      { status: 400 }
+    )
+  }
+  return NextResponse.json(
+    { error: 'An unexpected error occurred' },
+    { status: 500 }
+  )
+}
+
+export async function GET(request: Request) {
   try {
-    const { id } = await params
+    const boardId = parseInt(request.url.split('/boards/')[1].split('/')[0])
+    if (isNaN(boardId)) {
+      return NextResponse.json(
+        { error: 'Invalid board ID' },
+        { status: 400 }
+      )
+    }
+
     const labels = await prisma.label.findMany({
-      where: { boardId: parseInt(id) },
+      where: { boardId },
       orderBy: { createdAt: 'asc' }
     })
+
     return NextResponse.json(labels)
   } catch (error) {
-    console.error('Error fetching labels:', error)
-    return new NextResponse('Error fetching labels', { status: 500 })
+    return handleError(error)
   }
 }
 
-export async function POST(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: Request) {
   try {
-    const { id } = params
-    const data = await request.json()
-    
+    const boardId = parseInt(request.url.split('/boards/')[1].split('/')[0])
+    if (isNaN(boardId)) {
+      return NextResponse.json(
+        { error: 'Invalid board ID' },
+        { status: 400 }
+      )
+    }
+
+    const json = await request.json()
+    const data = labelSchema.parse(json)
+
+    const board = await prisma.board.findUnique({
+      where: { id: boardId }
+    })
+
+    if (!board) {
+      return NextResponse.json(
+        { error: 'Board not found' },
+        { status: 404 }
+      )
+    }
+
     const label = await prisma.label.create({
       data: {
-        name: data.name,
-        color: data.color,
-        boardId: parseInt(id)
+        ...data,
+        boardId
       }
     })
-    
-    return NextResponse.json(label)
+
+    return NextResponse.json(label, { status: 201 })
   } catch (error) {
-    console.error('Error creating label:', error)
-    return new NextResponse('Error creating label', { status: 500 })
+    return handleError(error)
   }
 }
 
-export async function PUT(
-  request: Request,
-) {
+export async function PUT(request: Request) {
   try {
-    const data = await request.json()
+    const json = await request.json()
+    const { id, ...data } = json
     
+    if (!id || typeof id !== 'number') {
+      return NextResponse.json(
+        { error: 'Valid label ID is required' },
+        { status: 400 }
+      )
+    }
+
+    const validData = labelSchema.parse(data)
+
     const label = await prisma.label.update({
-      where: { id: data.id },
-      data: {
-        name: data.name,
-        color: data.color
-      }
+      where: { id },
+      data: validData
     })
-    
+
     return NextResponse.json(label)
   } catch (error) {
-    console.error('Error updating label:', error)
-    return new NextResponse('Error updating label', { status: 500 })
+    return handleError(error)
   }
 }
 
-export async function DELETE(
-  request: Request,
-) {
+export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const labelId = searchParams.get('labelId')
-    
-    if (!labelId) {
-      return new NextResponse('Label ID is required', { status: 400 })
+
+    if (!labelId || isNaN(parseInt(labelId))) {
+      return NextResponse.json(
+        { error: 'Valid label ID is required' },
+        { status: 400 }
+      )
     }
 
     await prisma.label.delete({
       where: { id: parseInt(labelId) }
     })
 
-    return new NextResponse(null, { status: 204 })
+    return NextResponse.json(
+      { message: 'Label deleted successfully' },
+      { status: 200 }
+    )
   } catch (error) {
-    console.error('Error deleting label:', error)
-    return new NextResponse('Error deleting label', { status: 500 })
+    return handleError(error)
   }
 } 

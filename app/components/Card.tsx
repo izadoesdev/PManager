@@ -194,7 +194,7 @@ ${card.status !== 'active' ? `${card.status === 'archived' ? 'Archived' : 'Delet
                     <div className="flex-1 min-w-0">
                       <h4 className="font-medium text-sm">{card.title}</h4>
                       {card.description && (
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-xs text-muted-foreground mt-1 truncate ">
                           {card.description}
                         </p>
                       )}

@@ -1,15 +1,18 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/db'
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: Request) {
   try {
-    const {id} = await params
+    const id = parseInt(request.url.split('/cards/')[1].split('/')[0])
+    if (isNaN(id)) {
+      return NextResponse.json(
+        { error: 'Invalid card ID' },
+        { status: 400 }
+      )
+    }
 
     await prisma.card.delete({
-      where: { id: parseInt(id) }
+      where: { id }
     })
 
     return new NextResponse(null, { status: 204 })
